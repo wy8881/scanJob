@@ -3,9 +3,15 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "migrate": "bun run src/db/migrate.ts",
+    "gen-types": "bun run src/db/gen-types.ts > src/db/schema.types.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/cheerio": "^1.0.0"
+    "@types/cheerio": "^1.0.0",
+    "schemats": "^3.0.3"
   },
   "peerDependencies": {
     "typescript": "^5"
