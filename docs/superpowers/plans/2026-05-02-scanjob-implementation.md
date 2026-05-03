@@ -4,7 +4,7 @@
 
 **Goal:** Build a scheduled job scraper that collects IT listings from Seek and LinkedIn, enriches them with level/category/tech/salary metadata, and serves filtered results via a REST API.
 
-**Architecture:** Monolith — Bun + Elysia handles the API, croner runs scrapes every 6 hours inside the same process, enrichment pipeline classifies each job via keyword matching with Claude Haiku as fallback, results stored in PostgreSQL with many-to-many relations for cities and technologies.
+**Architecture:** Monolith — Bun + Elysia handles the API, croner runs scrapes once daily at noon inside the same process, enrichment pipeline classifies each job via keyword matching with Claude Haiku as fallback, results stored in PostgreSQL with many-to-many relations for cities and technologies.
 
 **Tech Stack:** Bun, Elysia, croner, Playwright (Seek), fetch + Cheerio (LinkedIn), postgres.js, PostgreSQL, @anthropic-ai/sdk, Railway
 
@@ -1898,13 +1898,13 @@ const app = new Elysia()
 
 console.log(`Server running on http://localhost:${app.server?.port}`)
 
-// Schedule scrapes every 6 hours
-new Cron('0 */6 * * *', () => {
+// Schedule scrapes every day at noon (12:00 AEST)
+new Cron('0 12 * * *', () => {
   console.log('[cron] Starting scheduled scrape...')
   runScrape().catch(err => console.error('[cron] Scrape failed:', err))
 })
 
-console.log('[cron] Scrape scheduled every 6 hours')
+console.log('[cron] Scrape scheduled daily at noon')
 ```
 
 - [ ] **Step 3: Run the server and verify it starts**

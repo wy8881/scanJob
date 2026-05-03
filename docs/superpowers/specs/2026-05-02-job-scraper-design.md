@@ -5,7 +5,7 @@
 
 A scheduled job scraper that collects IT job listings from Seek and LinkedIn, enriches them with structured metadata (level, category, tech stack, salary), and serves them via a REST API to a small team.
 
-Data is **not real-time** — scraped on a schedule (every 6 hours). Users query the API or a frontend to filter and browse listings.
+Data is **not real-time** — scraped on a schedule (daily at noon). Users query the API or a frontend to filter and browse listings.
 
 ---
 
@@ -15,7 +15,7 @@ Data is **not real-time** — scraped on a schedule (every 6 hours). Users query
 |---|---|---|
 | Runtime | **Bun** | Faster than Node, TypeScript built-in, no compile step |
 | Web framework | **Elysia** | TypeScript-first, fast, built for Bun |
-| Scheduler | **croner** | Lightweight cron library, works natively with Bun |
+| Scheduler | **croner** | Lightweight cron library, works natively with Bun — runs daily at noon |
 | Seek scraper | **Playwright** | Required — Seek is behind Cloudflare bot protection |
 | LinkedIn scraper | **fetch + Cheerio** | LinkedIn guest API works with plain HTTP, no browser needed |
 | Database | **PostgreSQL** | Relational, supports arrays, powerful filtering/joins |
@@ -32,7 +32,7 @@ Data is **not real-time** — scraped on a schedule (every 6 hours). Users query
 │                                                      │
 │  ┌──────────────┐      ┌──────────────────────────┐ │
 │  │  Elysia API  │      │     croner Scheduler      │ │
-│  │              │      │  runs every 6 hours       │ │
+│  │              │      │  runs daily at noon       │ │
 │  │  GET /jobs   │      │                           │ │
 │  │  GET /jobs/:id│      │  ┌──────┐  ┌──────────┐  │ │
 │  │  GET /scrape/ │      │  │Seek  │  │LinkedIn  │  │ │
