@@ -1,6 +1,29 @@
 import sql from './client'
 import type { EnrichedJob, JobFilters } from '../types'
 
+// --- Normalization helpers ---
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/\(.*?\)/g, ' ')
+    .replace(/\b(sydney|melbourne|brisbane|perth|adelaide|canberra|remote|hybrid|wfh|australia)\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeCompany(company: string): string {
+  return company
+    .toLowerCase()
+    .replace(/\b(pty\.?\s*ltd\.?|ltd\.?|limited|australia|aust\.?|inc\.?|corp\.?|group|co\.?)\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// --- Scrape run tracking ---
+
 export async function startScrapeRun(source: string): Promise<number> {
   const [row] = await sql`
     INSERT INTO scrape_runs (source, status)
@@ -26,27 +49,39 @@ export async function failScrapeRun(id: number): Promise<void> {
   `
 }
 
+// --- Job upsert ---
+
 export async function upsertJob(job: EnrichedJob): Promise<number | null> {
   return await sql.begin(async (tx) => {
-    const [row] = await tx`
+    const normTitle = normalizeTitle(job.title)
+    const normCompany = normalizeCompany(job.company ?? '')
+
+    // Upsert canonical job — dedup by normalized title + company + level
+    const [jobRow] = await tx`
       INSERT INTO jobs (
-        title, company, category, level,
-        salary_min, salary_max, source, source_id,
-        url, description, classified_by, llm_confidence, posted_at
+        title, company, normalized_title, normalized_company,
+        category, level, salary_min, salary_max,
+        description, classified_by, llm_confidence
       ) VALUES (
-        ${job.title}, ${job.company}, ${job.category}, ${job.level},
-        ${job.salaryMin}, ${job.salaryMax}, ${job.source}, ${job.sourceId},
-        ${job.url}, ${job.description}, ${job.classifiedBy}, ${job.llmConfidence},
-        ${job.postedAt}
+        ${job.title}, ${job.company}, ${normTitle}, ${normCompany},
+        ${job.category}, ${job.level}, ${job.salaryMin}, ${job.salaryMax},
+        ${job.description}, ${job.classifiedBy}, ${job.llmConfidence}
       )
+      ON CONFLICT (normalized_title, normalized_company, level)
+      DO UPDATE SET title = jobs.title
+      RETURNING id
+    `
+    const jobId: number = jobRow.id
+
+    // Insert source listing — skip if already scraped from this source
+    const [listing] = await tx`
+      INSERT INTO job_listings (job_id, source, source_id, url, posted_at)
+      VALUES (${jobId}, ${job.source}, ${job.sourceId}, ${job.url}, ${job.postedAt})
       ON CONFLICT (source, source_id) DO NOTHING
       RETURNING id
     `
 
-    if (!row) return null
-
-    const jobId: number = row.id
-
+    // Cities and tech stack belong to the canonical job
     for (const cityName of job.cities) {
       const [city] = await tx`
         INSERT INTO cities (name) VALUES (${cityName})
@@ -71,8 +106,16 @@ export async function upsertJob(job: EnrichedJob): Promise<number | null> {
       `
     }
 
-    return jobId
+    return listing ? jobId : null
   })
+}
+
+// --- Query types ---
+
+export type JobListing = {
+  source: string
+  url: string
+  posted_at: Date | null
 }
 
 export type JobRow = {
@@ -83,12 +126,12 @@ export type JobRow = {
   level: string
   salary_min: number | null
   salary_max: number | null
-  source: string
-  url: string
-  posted_at: Date | null
   cities: string[]
   tech_stack: string[]
+  listings: JobListing[]
 }
+
+// --- Queries ---
 
 export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; total: number }> {
   const { category, levels, city, techs, salaryMin, page = 1, limit = 20 } = filters
@@ -108,17 +151,24 @@ export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; 
 
   const data = await sql<JobRow[]>`
     SELECT j.id, j.title, j.company, j.category, j.level,
-           j.salary_min, j.salary_max, j.source, j.url, j.posted_at,
+           j.salary_min, j.salary_max,
            COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cities,
-           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack
+           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
+           COALESCE(
+             json_agg(DISTINCT jsonb_build_object(
+               'source', jl.source, 'url', jl.url, 'posted_at', jl.posted_at
+             )) FILTER (WHERE jl.id IS NOT NULL),
+             '[]'
+           ) AS listings
     FROM jobs j
+    LEFT JOIN job_listings jl ON j.id = jl.job_id
     LEFT JOIN job_cities jc ON j.id = jc.job_id
     LEFT JOIN cities c ON jc.city_id = c.id
     LEFT JOIN job_technologies jt ON j.id = jt.job_id
     LEFT JOIN technologies t ON jt.tech_id = t.id
     WHERE 1=1 ${cf} ${lf} ${sf} ${cityf} ${techf}
     GROUP BY j.id
-    ORDER BY j.posted_at DESC NULLS LAST
+    ORDER BY j.id DESC
     LIMIT ${limit} OFFSET ${offset}
   `
 
@@ -139,8 +189,15 @@ export async function getJobById(id: number) {
   const [job] = await sql`
     SELECT j.*,
            COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cities,
-           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack
+           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
+           COALESCE(
+             json_agg(DISTINCT jsonb_build_object(
+               'source', jl.source, 'url', jl.url, 'posted_at', jl.posted_at
+             )) FILTER (WHERE jl.id IS NOT NULL),
+             '[]'
+           ) AS listings
     FROM jobs j
+    LEFT JOIN job_listings jl ON j.id = jl.job_id
     LEFT JOIN job_cities jc ON j.id = jc.job_id
     LEFT JOIN cities c ON jc.city_id = c.id
     LEFT JOIN job_technologies jt ON j.id = jt.job_id

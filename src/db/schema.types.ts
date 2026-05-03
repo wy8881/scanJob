@@ -31,6 +31,16 @@ export type JobCitiesRow = {
   city_id: number
 }
 
+export type JobListingsRow = {
+  id: number
+  job_id: number
+  source: string
+  source_id: string
+  url: string | null
+  posted_at: Date | null
+  scraped_at: Date | null
+}
+
 export type JobTechnologiesRow = {
   job_id: number
   tech_id: number
@@ -41,18 +51,15 @@ export type JobsRow = {
   title: string
   company: string | null
   company_id: number | null
+  normalized_title: string
+  normalized_company: string
   category: string | null
   level: string | null
   salary_min: number | null
   salary_max: number | null
-  source: string
-  source_id: string | null
-  url: string | null
   description: string | null
   classified_by: string | null
   llm_confidence: number | null
-  posted_at: Date | null
-  scraped_at: Date | null
 }
 
 export type ScrapeRunsRow = {
