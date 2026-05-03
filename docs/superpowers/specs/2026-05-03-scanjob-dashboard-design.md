@@ -47,10 +47,12 @@ Four buttons in the top-right of the header:
 
 | Button | State | Notes |
 |---|---|---|
-| This month | **Active** | Default selection |
-| 3 months | Disabled | Enabled once 3 months of data exists |
-| 6 months | Disabled | Enabled once 6 months of data exists |
-| This year | Disabled | Enabled once 1 year of data exists |
+| This month | **Active** | Default selection. `from` = first day of current month. |
+| 3 months | Disabled | Enabled when `meta.earliestJobDate` is ≥ 3 months ago |
+| 6 months | Disabled | Enabled when `meta.earliestJobDate` is ≥ 6 months ago |
+| This year | Disabled | Enabled when `meta.earliestJobDate` is in the current calendar year |
+
+The frontend reads `meta.earliestJobDate` from the initial stats response to decide which buttons to enable. No hardcoded date logic.
 
 Changing the active time range triggers a new `GET /stats` call and re-renders all charts.
 
@@ -92,7 +94,7 @@ Each card shows the #1 value for that dimension. Four of the five have a **click
 
 | Card | Metric | Has top-5 popover |
 |---|---|---|
-| Total Jobs | Count + % change vs last period | No |
+| Total Jobs | Count (`meta.totalJobs`) | No |
 | Top Category | Name + listing count | Yes |
 | Top Tech | Name + listing count | Yes |
 | Common Level | Name + % of listings | Yes |
@@ -137,6 +139,10 @@ GET /stats?from=2026-05-01&to=2026-05-31
 ### Response
 ```json
 {
+  "meta": {
+    "totalJobs": 178,
+    "earliestJobDate": "2026-05-01"
+  },
   "byCategory": [
     { "category": "software-engineer", "count": 58 }
   ],
