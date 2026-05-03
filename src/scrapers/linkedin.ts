@@ -30,6 +30,8 @@ async function fetchPage(keyword: string, start: number): Promise<RawJob[]> {
     const url = $(el).find('a.base-card__full-link').attr('href') ?? ''
     const entityUrn = $(el).attr('data-entity-urn') ?? ''
     const sourceId = entityUrn.split(':').pop() ?? url
+    const datetime = $(el).find('time').attr('datetime')
+    const postedAt = datetime ? new Date(datetime) : new Date()
 
     if (!title || !sourceId) return
 
@@ -41,12 +43,11 @@ async function fetchPage(keyword: string, start: number): Promise<RawJob[]> {
       title,
       company,
       cities,
-      salaryText: null,
       description: '',
       url,
       sourceId,
       source: 'linkedin',
-      postedAt: null,
+      postedAt,
     })
   })
 

@@ -2,12 +2,11 @@ export type RawJob = {
   title: string
   company: string | null
   cities: string[]
-  salaryText: string | null
   description: string
   url: string
   sourceId: string
   source: 'seek' | 'linkedin'
-  postedAt: Date | null
+  postedAt: Date
 }
 
 export type EnrichedJob = {
@@ -16,8 +15,6 @@ export type EnrichedJob = {
   cities: string[]
   category: string
   level: string
-  salaryMin: number | null
-  salaryMax: number | null
   techStack: string[]
   source: 'seek' | 'linkedin'
   sourceId: string
@@ -25,7 +22,7 @@ export type EnrichedJob = {
   description: string
   classifiedBy: 'keyword' | 'llm'
   llmConfidence: number | null
-  postedAt: Date | null
+  postedAt: Date
 }
 
 export type CompanyInfo = {
@@ -41,7 +38,6 @@ export type JobFilters = {
   levels?: string[]
   city?: string
   techs?: string[]
-  salaryMin?: number
   page?: number
   limit?: number
 }

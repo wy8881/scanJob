@@ -37,7 +37,6 @@ export type JobListingsRow = {
   source: string
   source_id: string
   url: string | null
-  posted_at: Date | null
   scraped_at: Date | null
 }
 
@@ -55,11 +54,10 @@ export type JobsRow = {
   normalized_company: string
   category: string | null
   level: string | null
-  salary_min: number | null
-  salary_max: number | null
   description: string | null
   classified_by: string | null
   llm_confidence: number | null
+  posted_at: Date | null
 }
 
 export type ScrapeRunsRow = {

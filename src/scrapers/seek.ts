@@ -1,6 +1,17 @@
 import { chromium } from 'playwright'
 import type { RawJob } from '../types'
 
+function parseRelativeDate(text: string): Date {
+  const match = text.match(/^(\d+)(m|h|d)\s*ago$/i)
+  if (!match) return new Date()
+  const value = parseInt(match[1])
+  const unit = match[2].toLowerCase()
+  const ms = unit === 'm' ? value * 60 * 1000
+           : unit === 'h' ? value * 60 * 60 * 1000
+           : value * 24 * 60 * 60 * 1000
+  return new Date(Date.now() - ms)
+}
+
 const CATEGORY_URLS: Record<string, string> = {
   'software-engineer': 'software-engineer-jobs',
   'backend-developer': 'backend-developer-jobs',
@@ -35,12 +46,16 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
         const href = titleEl?.getAttribute('href') ?? ''
         const sourceId = href.match(/\/job\/(\d+)/)?.[1] ?? href
 
+        const dateEl = card.querySelector('[data-automation="jobListingDate"]')
+        const dateText = dateEl?.textContent?.trim() ?? ''
+
         return {
           title: titleEl?.textContent?.trim() ?? '',
           company: companyEl?.textContent?.trim() ?? null,
           locationText: locationEl?.textContent?.trim() ?? '',
           url: href ? `https://www.seek.com.au${href.split('#')[0]}` : '',
           sourceId,
+          dateText,
         }
       })
     })
@@ -53,12 +68,11 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
         title: j.title,
         company: j.company,
         cities: j.locationText ? [j.locationText.split(',')[0].trim()] : [],
-        salaryText: null,
         description: '',
         url: j.url,
         sourceId: j.sourceId,
         source: 'seek',
-        postedAt: null,
+        postedAt: parseRelativeDate(j.dateText),
       })
     }
 

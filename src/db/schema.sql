@@ -30,11 +30,10 @@ CREATE TABLE IF NOT EXISTS jobs (
   normalized_company TEXT NOT NULL,
   category           TEXT,
   level              TEXT,
-  salary_min         INTEGER,
-  salary_max         INTEGER,
   description        TEXT,
   classified_by      TEXT,
-  llm_confidence     FLOAT
+  llm_confidence     FLOAT,
+  posted_at          TIMESTAMP
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS jobs_dedup_idx ON jobs (normalized_title, normalized_company, level);
@@ -46,7 +45,6 @@ CREATE TABLE IF NOT EXISTS job_listings (
   source     TEXT NOT NULL,
   source_id  TEXT NOT NULL,
   url        TEXT,
-  posted_at  TIMESTAMP,
   scraped_at TIMESTAMP DEFAULT NOW(),
   UNIQUE (source, source_id)
 );

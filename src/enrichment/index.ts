@@ -10,8 +10,6 @@ export async function enrich(raw: RawJob): Promise<EnrichedJob> {
     ...raw,
     category,
     level,
-    salaryMin: null,
-    salaryMax: null,
     techStack,
     classifiedBy: 'keyword',
     llmConfidence: null,

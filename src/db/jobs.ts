@@ -60,12 +60,11 @@ export async function upsertJob(job: EnrichedJob): Promise<number | null> {
     const [jobRow] = await tx`
       INSERT INTO jobs (
         title, company, normalized_title, normalized_company,
-        category, level, salary_min, salary_max,
-        description, classified_by, llm_confidence
+        category, level, description, classified_by, llm_confidence, posted_at
       ) VALUES (
         ${job.title}, ${job.company}, ${normTitle}, ${normCompany},
-        ${job.category}, ${job.level}, ${job.salaryMin}, ${job.salaryMax},
-        ${job.description}, ${job.classifiedBy}, ${job.llmConfidence}
+        ${job.category}, ${job.level}, ${job.description}, ${job.classifiedBy}, ${job.llmConfidence},
+        ${job.postedAt}
       )
       ON CONFLICT (normalized_title, normalized_company, level)
       DO UPDATE SET title = jobs.title
@@ -124,8 +123,6 @@ export type JobRow = {
   company: string | null
   category: string
   level: string
-  salary_min: number | null
-  salary_max: number | null
   cities: string[]
   tech_stack: string[]
   listings: JobListing[]
@@ -134,12 +131,11 @@ export type JobRow = {
 // --- Queries ---
 
 export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; total: number }> {
-  const { category, levels, city, techs, salaryMin, page = 1, limit = 20 } = filters
+  const { category, levels, city, techs, page = 1, limit = 20 } = filters
   const offset = (page - 1) * limit
 
   const cf = category ? sql`AND j.category = ${category}` : sql``
   const lf = levels?.length ? sql`AND j.level = ANY(${levels})` : sql``
-  const sf = salaryMin ? sql`AND j.salary_min >= ${salaryMin}` : sql``
   const cityf = city ? sql`AND j.id IN (
     SELECT jc.job_id FROM job_cities jc
     JOIN cities c ON jc.city_id = c.id WHERE c.name = ${city}
@@ -151,7 +147,6 @@ export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; 
 
   const data = await sql<JobRow[]>`
     SELECT j.id, j.title, j.company, j.category, j.level,
-           j.salary_min, j.salary_max,
            COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cities,
            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
            COALESCE(
