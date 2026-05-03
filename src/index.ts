@@ -6,6 +6,8 @@ export const app = new Elysia()
   .use(cors())
   .use(statsRoutes)
 
-app.listen(process.env.PORT ?? 3000, () => {
-  console.log(`Server running on port ${app.server?.port}`)
-})
+if (import.meta.main) {
+  app.listen(process.env.PORT ?? 3000, () => {
+    console.log(`Server running on port ${app.server?.port}`)
+  })
+}
