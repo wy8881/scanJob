@@ -34,7 +34,7 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
     const href = $(el).find('a.base-card__full-link').attr('href') ?? ''
     const url = href.startsWith('http') ? href.split('?')[0] : `https://www.linkedin.com${href.split('?')[0]}`
     const entityUrn = $(el).attr('data-entity-urn') ?? ''
-    const sourceId = entityUrn.split(':').pop() || url.match(/\/jobs\/view\/(\d+)/)?.[1] ?? href
+    const sourceId = entityUrn.split(':').pop() || url.match(/\/jobs\/view\/(\d+)/)?.[1] || href
     const datetime = $(el).find('.job-search-card__listdate--new').attr('datetime')
     const postedAt = datetime ? new Date(datetime) : new Date()
 
