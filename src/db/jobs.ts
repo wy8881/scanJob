@@ -74,8 +74,8 @@ export async function upsertJob(job: EnrichedJob): Promise<number | null> {
 
     // Insert source listing — skip if already scraped from this source
     const [listing] = await tx`
-      INSERT INTO job_listings (job_id, source, source_id, url, posted_at)
-      VALUES (${jobId}, ${job.source}, ${job.sourceId}, ${job.url}, ${job.postedAt})
+      INSERT INTO job_listings (job_id, source, source_id, url)
+      VALUES (${jobId}, ${job.source}, ${job.sourceId}, ${job.url})
       ON CONFLICT (source, source_id) DO NOTHING
       RETURNING id
     `
@@ -151,7 +151,7 @@ export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; 
            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
            COALESCE(
              json_agg(DISTINCT jsonb_build_object(
-               'source', jl.source, 'url', jl.url, 'posted_at', jl.posted_at
+               'source', jl.source, 'url', jl.url, 'posted_at', j.posted_at
              )) FILTER (WHERE jl.id IS NOT NULL),
              '[]'
            ) AS listings
@@ -187,7 +187,7 @@ export async function getJobById(id: number) {
            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
            COALESCE(
              json_agg(DISTINCT jsonb_build_object(
-               'source', jl.source, 'url', jl.url, 'posted_at', jl.posted_at
+               'source', jl.source, 'url', jl.url, 'posted_at', j.posted_at
              )) FILTER (WHERE jl.id IS NOT NULL),
              '[]'
            ) AS listings
