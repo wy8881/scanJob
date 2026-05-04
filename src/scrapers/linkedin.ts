@@ -13,7 +13,7 @@ const SEARCH_TERMS = [
   'data analyst', 'IT support', 'cyber security', 'QA engineer',
 ]
 
-async function fetchPage(keyword: string, start: number, daterangeDays: number): Promise<RawJob[]> {
+export async function fetchPage(keyword: string, start: number, daterangeDays: number): Promise<RawJob[]> {
   const tpr = daterangeDays * 24 * 3600
   const url = `${BASE_URL}?keywords=${encodeURIComponent(keyword)}&location=Australia&f_TPR=r${tpr}&start=${start}`
 

@@ -84,6 +84,28 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange
   return jobs
 }
 
+export async function scrapeSeekCategory(slug: string, daterange = 1): Promise<RawJob[]> {
+  const browser = await chromium.launch({ headless: true })
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    locale: 'en-AU',
+    viewport: { width: 1280, height: 800 },
+    extraHTTPHeaders: {
+      'Accept-Language': 'en-AU,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    },
+  })
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined })
+  })
+  const page = await context.newPage()
+  try {
+    return await scrapeCategory(page, slug, daterange)
+  } finally {
+    await browser.close()
+  }
+}
+
 export async function scrapeSeek(daterange = 3): Promise<RawJob[]> {
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({
