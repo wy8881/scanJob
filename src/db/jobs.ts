@@ -161,7 +161,7 @@ export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; 
     LEFT JOIN cities c ON jc.city_id = c.id
     LEFT JOIN job_technologies jt ON j.id = jt.job_id
     LEFT JOIN technologies t ON jt.tech_id = t.id
-    WHERE 1=1 ${cf} ${lf} ${sf} ${cityf} ${techf}
+    WHERE 1=1 ${cf} ${lf} ${cityf} ${techf}
     GROUP BY j.id
     ORDER BY j.id DESC
     LIMIT ${limit} OFFSET ${offset}
@@ -174,7 +174,7 @@ export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; 
     LEFT JOIN cities c ON jc.city_id = c.id
     LEFT JOIN job_technologies jt ON j.id = jt.job_id
     LEFT JOIN technologies t ON jt.tech_id = t.id
-    WHERE 1=1 ${cf} ${lf} ${sf} ${cityf} ${techf}
+    WHERE 1=1 ${cf} ${lf} ${cityf} ${techf}
   `
 
   return { data, total: Number(count) }
