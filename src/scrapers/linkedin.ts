@@ -27,7 +27,7 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
   const $ = cheerio.load(html)
   const jobs: RawJob[] = []
 
-  $('.job-search-card').each((_, el) => {
+  $('.base-search-card__info').each((_, el) => {
     const title = $(el).find('.base-search-card__title').text().trim()
     const company = $(el).find('.base-search-card__subtitle').text().trim() || null
     const location = $(el).find('.base-search-card__metadata span').first().text().trim()
