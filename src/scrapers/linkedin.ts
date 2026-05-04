@@ -40,7 +40,7 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
 
     if (!title || !sourceId) return
 
-    const cities = location ? [location.trim()] : []
+    const cities = location ? [location.split(',')[0].trim()] : []
 
     jobs.push({
       title,
