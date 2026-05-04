@@ -13,6 +13,6 @@ if (import.meta.main) {
     console.log(`Server running on port ${app.server?.port}`)
   })
 
-  runScrape()
-  new Cron('0 0 * * *', runScrape)
+  runScrape(14)
+  new Cron('0 0 */3 * *', () => runScrape(3))
 }

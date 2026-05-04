@@ -3,9 +3,9 @@ import { scrapeSeek } from './seek'
 import { enrich } from '../enrichment'
 import { upsertJob, startScrapeRun, finishScrapeRun, failScrapeRun } from '../db/jobs'
 
-export async function runScrape(): Promise<void> {
+export async function runScrape(daterange = 3): Promise<void> {
   await runSource('linkedin', scrapeLinkedIn)
-  await runSource('seek', scrapeSeek)
+  await runSource('seek', () => scrapeSeek(daterange))
 }
 
 async function runSource(

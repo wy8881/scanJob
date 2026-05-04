@@ -24,11 +24,11 @@ const CATEGORY_URLS: Record<string, string> = {
 
 type BrowserPage = Awaited<ReturnType<typeof chromium.launch>>['contexts'][0]['pages'][0]
 
-async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<RawJob[]> {
+async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange: number): Promise<RawJob[]> {
   const jobs: RawJob[] = []
 
   for (let pageNum = 1; ; pageNum++) {
-    const url = `https://www.seek.com.au/${categorySlug}-in-information-communication-technology/in-All-Australia?daterange=31&sortmode=ListedDate&page=${pageNum}`
+    const url = `https://www.seek.com.au/${categorySlug}/in-All-Australia?daterange=${daterange}&sortmode=ListedDate&page=${pageNum}`
     console.log(`  [seek] GET ${url}`)
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await new Promise(r => setTimeout(r, 1500))
@@ -61,7 +61,7 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
       })
     })
 
-    console.log(`  [seek] ${categorySlug} page ${pageNum}: ${pageJobs.length} cards`)
+    console.log(`  [seek] ${categorySlug} page ${pageNum}: ${pageJobs.length} cards (last ${daterange}d)`)
     if (pageJobs.length === 0) break
 
     for (const j of pageJobs) {
@@ -84,7 +84,7 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
   return jobs
 }
 
-export async function scrapeSeek(): Promise<RawJob[]> {
+export async function scrapeSeek(daterange = 3): Promise<RawJob[]> {
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -106,7 +106,7 @@ export async function scrapeSeek(): Promise<RawJob[]> {
   try {
     for (const [, slug] of Object.entries(CATEGORY_URLS)) {
       try {
-        const jobs = await scrapeCategory(page, slug)
+        const jobs = await scrapeCategory(page, slug, daterange)
         all.push(...jobs)
         console.log(`Seek: scraped ${jobs.length} jobs for ${slug}`)
       } catch (err) {
