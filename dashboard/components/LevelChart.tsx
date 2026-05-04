@@ -34,7 +34,7 @@ export function LevelChart({ data }: LevelChartProps) {
                 innerRadius={35}
                 outerRadius={52}
                 dataKey="count"
-                onClick={(entry) => handleClick(entry.level)}
+                onClick={(entry) => handleClick((entry as unknown as { level: string }).level)}
               >
                 {data.map((entry, i) => (
                   <Cell
@@ -45,7 +45,7 @@ export function LevelChart({ data }: LevelChartProps) {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number, name: string) => [value, name]} />
+              <Tooltip formatter={(value, name) => [value as number, name as string]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

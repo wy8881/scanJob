@@ -50,8 +50,8 @@ export function JobsPostedChart({ data }: JobsPostedChartProps) {
           />
           <Tooltip
             contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb' }}
-            formatter={(value: number) => [value, 'Total jobs']}
-            labelFormatter={formatDate}
+            formatter={(value) => [value as number, 'Total jobs']}
+            labelFormatter={(label) => formatDate(String(label))}
           />
           <Line
             type="monotone"

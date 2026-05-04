@@ -40,12 +40,12 @@ export function TechChart({ data }: TechChartProps) {
           />
           <Tooltip
             contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb' }}
-            formatter={(value: number) => [value, 'listings']}
+            formatter={(value) => [value as number, 'listings']}
           />
           <Bar
             dataKey="count"
             radius={[0, 3, 3, 0]}
-            onClick={(entry) => handleClick(entry.tech)}
+            onClick={(entry) => handleClick((entry as unknown as { tech: string }).tech)}
             cursor="pointer"
           >
             {data.map((entry) => (
