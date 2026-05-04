@@ -21,13 +21,13 @@ console.log('=== URLs to verify manually in browser ===')
 for (const [category, slug] of Object.entries(CATEGORY_URLS)) {
   console.log(`\n${category}:`)
   for (let p = 1; p <= 5; p++) {
-    console.log(`  page ${p}: https://www.seek.com.au/${slug}-in-information-communication-technology/in-All-Australia?daterange=31&sortmode=ListedDate&page=${p}`)
+    console.log(`  page ${p}: https://www.seek.com.au/${slug}/in-All-Australia?daterange=1&sortmode=ListedDate&page=${p}`)
   }
 }
 
 console.log('\n=== Running scrape ===\n')
 const start = Date.now()
-const jobs = await scrapeSeek()
+const jobs = await scrapeSeek(1)
 const elapsed = ((Date.now() - start) / 1000).toFixed(1)
 
 console.log(`\n=== Results (${elapsed}s) ===`)
