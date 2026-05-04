@@ -27,7 +27,7 @@ type BrowserPage = Awaited<ReturnType<typeof chromium.launch>>['contexts'][0]['p
 async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<RawJob[]> {
   const jobs: RawJob[] = []
 
-  for (let pageNum = 1; pageNum <= 5; pageNum++) {
+  for (let pageNum = 1; ; pageNum++) {
     const url = `https://www.seek.com.au/${categorySlug}/in-Australia?page=${pageNum}`
     console.log(`  [seek] GET ${url}`)
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
