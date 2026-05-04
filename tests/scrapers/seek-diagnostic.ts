@@ -21,7 +21,7 @@ console.log('=== URLs to verify manually in browser ===')
 for (const [category, slug] of Object.entries(CATEGORY_URLS)) {
   console.log(`\n${category}:`)
   for (let p = 1; p <= 5; p++) {
-    console.log(`  page ${p}: https://www.seek.com.au/${slug}/in-Australia?page=${p}`)
+    console.log(`  page ${p}: https://www.seek.com.au/${slug}-in-information-communication-technology/in-All-Australia?daterange=31&sortmode=ListedDate&page=${p}`)
   }
 }
 
