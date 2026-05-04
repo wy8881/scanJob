@@ -29,6 +29,7 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
 
   for (let pageNum = 1; pageNum <= 5; pageNum++) {
     const url = `https://www.seek.com.au/${categorySlug}/in-Australia?page=${pageNum}`
+    console.log(`  [seek] GET ${url}`)
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await new Promise(r => setTimeout(r, 1500))
 
@@ -60,6 +61,7 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string): Promise<
       })
     })
 
+    console.log(`  [seek] ${categorySlug} page ${pageNum}: ${pageJobs.length} cards`)
     if (pageJobs.length === 0) break
 
     for (const j of pageJobs) {
