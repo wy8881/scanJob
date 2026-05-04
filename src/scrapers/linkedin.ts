@@ -18,9 +18,12 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
   const url = `${BASE_URL}?keywords=${encodeURIComponent(keyword)}&location=Australia&f_TPR=r${tpr}&start=${start}`
 
   const res = await fetch(url, { headers: HEADERS })
+  console.log(`  [linkedin] ${res.status} ${url}`)
   if (!res.ok) throw new Error(`LinkedIn returned ${res.status} for "${keyword}"`)
 
   const html = await res.text()
+  console.log(`  [linkedin] response length: ${html.length} chars`)
+  console.log(`  [linkedin] snippet: ${html.slice(0, 300).replace(/\s+/g, ' ')}`)
   const $ = cheerio.load(html)
   const jobs: RawJob[] = []
 

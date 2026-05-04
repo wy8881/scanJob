@@ -7,6 +7,11 @@ describe('LinkedIn scraper', () => {
 
     console.log(`\nTotal jobs on first page: ${jobs.length}`)
 
+    if (jobs.length === 0) {
+      console.log('\n⚠️  No jobs returned — check the snippet above to see what LinkedIn sent back')
+      console.log('Possible causes: endpoint blocked, HTML structure changed, or no jobs in range')
+    }
+
     expect(jobs.length).toBeGreaterThan(0)
 
     const first = jobs[0]
