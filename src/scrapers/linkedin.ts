@@ -57,11 +57,11 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
   return jobs
 }
 
-export async function scrapeLinkedIn(daterangeDays = 1): Promise<RawJob[]> {
+export async function scrapeLinkedIn(daterangeDays = 1, maxPages = Infinity): Promise<RawJob[]> {
   const all: RawJob[] = []
 
   for (const keyword of SEARCH_TERMS) {
-    for (let start = 0; ; start += 25) {
+    for (let start = 0; start < maxPages * 25; start += 25) {
       try {
         const jobs = await fetchPage(keyword, start, daterangeDays)
         if (jobs.length === 0) break
