@@ -27,22 +27,20 @@ export async function fetchPage(keyword: string, start: number, daterangeDays: n
   const $ = cheerio.load(html)
   const jobs: RawJob[] = []
 
-  $('.job-card-container').each((_, el) => {
-    const linkEl = $(el).find('a[href]').first()
-    const title = linkEl.attr('aria-label')?.trim() ?? ''
-    const company = $(el).find('.artdeco-entity-lockup__subtitle').text().trim() || null
-    const location = $(el).find('span[dir="ltr"]').first().text().trim()
-    const href = linkEl.attr('href') ?? ''
-    const url = href.startsWith('http') ? href : `https://www.linkedin.com${href}`
-    const sourceId = url.match(/\/jobs\/view\/(\d+)/)?.[1] ?? href
-    const datetime = $(el).find('time').attr('datetime')
+  $('.job-search-card').each((_, el) => {
+    const title = $(el).find('.base-search-card__title').text().trim()
+    const company = $(el).find('.base-search-card__subtitle').text().trim() || null
+    const location = $(el).find('.base-search-card__metadata span').first().text().trim()
+    const href = $(el).find('a.base-card__full-link').attr('href') ?? ''
+    const url = href.startsWith('http') ? href.split('?')[0] : `https://www.linkedin.com${href.split('?')[0]}`
+    const entityUrn = $(el).attr('data-entity-urn') ?? ''
+    const sourceId = entityUrn.split(':').pop() || url.match(/\/jobs\/view\/(\d+)/)?.[1] ?? href
+    const datetime = $(el).find('.base-search-card__metadata time').attr('datetime')
     const postedAt = datetime ? new Date(datetime) : new Date()
 
     if (!title || !sourceId) return
 
-    const cities = location
-      ? [location.split(',')[0].trim()]
-      : []
+    const cities = location ? [location.split(',')[0].trim()] : []
 
     jobs.push({
       title,
