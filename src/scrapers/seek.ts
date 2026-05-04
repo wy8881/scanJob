@@ -24,10 +24,10 @@ const CATEGORY_URLS: Record<string, string> = {
 
 type BrowserPage = Awaited<ReturnType<typeof chromium.launch>>['contexts'][0]['pages'][0]
 
-async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange: number): Promise<RawJob[]> {
+async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange: number, maxPages = Infinity): Promise<RawJob[]> {
   const jobs: RawJob[] = []
 
-  for (let pageNum = 1; ; pageNum++) {
+  for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
     const url = `https://www.seek.com.au/${categorySlug}/in-All-Australia?daterange=${daterange}&sortmode=ListedDate&page=${pageNum}`
     console.log(`  [seek] GET ${url}`)
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
@@ -84,7 +84,7 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange
   return jobs
 }
 
-export async function scrapeSeekCategory(slug: string, daterange = 1): Promise<RawJob[]> {
+export async function scrapeSeekCategory(slug: string, daterange = 1, maxPages = Infinity): Promise<RawJob[]> {
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -100,7 +100,7 @@ export async function scrapeSeekCategory(slug: string, daterange = 1): Promise<R
   })
   const page = await context.newPage()
   try {
-    return await scrapeCategory(page, slug, daterange)
+    return await scrapeCategory(page, slug, daterange, maxPages)
   } finally {
     await browser.close()
   }

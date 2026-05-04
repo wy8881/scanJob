@@ -3,7 +3,7 @@ import { scrapeSeekCategory } from '../../src/scrapers/seek'
 
 describe('Seek scraper', () => {
   it('captures correct data from first category', async () => {
-    const jobs = await scrapeSeekCategory('software-engineer-jobs', 1)
+    const jobs = await scrapeSeekCategory('software-engineer-jobs', 1, 1)
 
     console.log(`\nTotal jobs scraped: ${jobs.length}`)
 
