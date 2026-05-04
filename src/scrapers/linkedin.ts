@@ -13,8 +13,9 @@ const SEARCH_TERMS = [
   'data analyst', 'IT support', 'cyber security', 'QA engineer',
 ]
 
-async function fetchPage(keyword: string, start: number): Promise<RawJob[]> {
-  const url = `${BASE_URL}?keywords=${encodeURIComponent(keyword)}&location=Australia&start=${start}`
+async function fetchPage(keyword: string, start: number, daterangeDays: number): Promise<RawJob[]> {
+  const tpr = daterangeDays * 24 * 3600
+  const url = `${BASE_URL}?keywords=${encodeURIComponent(keyword)}&location=Australia&f_TPR=r${tpr}&start=${start}`
 
   const res = await fetch(url, { headers: HEADERS })
   if (!res.ok) throw new Error(`LinkedIn returned ${res.status} for "${keyword}"`)
@@ -54,15 +55,16 @@ async function fetchPage(keyword: string, start: number): Promise<RawJob[]> {
   return jobs
 }
 
-export async function scrapeLinkedIn(): Promise<RawJob[]> {
+export async function scrapeLinkedIn(daterangeDays = 1): Promise<RawJob[]> {
   const all: RawJob[] = []
 
   for (const keyword of SEARCH_TERMS) {
-    for (let start = 0; start < 100; start += 25) {
+    for (let start = 0; ; start += 25) {
       try {
-        const jobs = await fetchPage(keyword, start)
+        const jobs = await fetchPage(keyword, start, daterangeDays)
         if (jobs.length === 0) break
         all.push(...jobs)
+        console.log(`  [linkedin] "${keyword}" offset ${start}: ${jobs.length} jobs (last ${daterangeDays}d)`)
         await new Promise(r => setTimeout(r, 1500))
       } catch (err) {
         console.error(`LinkedIn scrape failed for "${keyword}" at offset ${start}:`, err)
