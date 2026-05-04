@@ -24,20 +24,21 @@ async function fetchPage(keyword: string, start: number, daterangeDays: number):
   const $ = cheerio.load(html)
   const jobs: RawJob[] = []
 
-  $('.job-search-card').each((_, el) => {
-    const title = $(el).find('.base-search-card__title').text().trim()
-    const company = $(el).find('.base-search-card__subtitle').text().trim() || null
-    const location = $(el).find('.job-search-card__location').text().trim()
-    const url = $(el).find('a.base-card__full-link').attr('href') ?? ''
-    const entityUrn = $(el).attr('data-entity-urn') ?? ''
-    const sourceId = entityUrn.split(':').pop() ?? url
+  $('.job-card-container').each((_, el) => {
+    const linkEl = $(el).find('a[href]').first()
+    const title = linkEl.attr('aria-label')?.trim() ?? ''
+    const company = $(el).find('.artdeco-entity-lockup__subtitle').text().trim() || null
+    const location = $(el).find('span[dir="ltr"]').first().text().trim()
+    const href = linkEl.attr('href') ?? ''
+    const url = href.startsWith('http') ? href : `https://www.linkedin.com${href}`
+    const sourceId = url.match(/\/jobs\/view\/(\d+)/)?.[1] ?? href
     const datetime = $(el).find('time').attr('datetime')
     const postedAt = datetime ? new Date(datetime) : new Date()
 
     if (!title || !sourceId) return
 
     const cities = location
-      ? location.split(',').map(s => s.trim()).filter(Boolean)
+      ? [location.split(',')[0].trim()]
       : []
 
     jobs.push({
