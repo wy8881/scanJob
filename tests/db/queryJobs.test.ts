@@ -76,7 +76,6 @@ afterAll(async () => {
       SELECT job_id FROM job_listings WHERE source_id LIKE 'test-qj-%'
     )
   `
-  await sql.end()
 })
 
 describe('queryJobs', () => {
