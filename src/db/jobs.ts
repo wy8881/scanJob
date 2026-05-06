@@ -1,0 +1,226 @@
+import sql from './client'
+import type { EnrichedJob, JobFilters } from '../types'
+
+// --- Normalization helpers ---
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/\(.*?\)/g, ' ')
+    .replace(/\b(sydney|melbourne|brisbane|perth|adelaide|canberra|remote|hybrid|wfh|australia)\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeCompany(company: string): string {
+  return company
+    .toLowerCase()
+    .replace(/\b(pty\.?\s*ltd\.?|ltd\.?|limited|australia|aust\.?|inc\.?|corp\.?|group|co\.?)\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// --- Scrape run tracking ---
+
+export async function startScrapeRun(source: string): Promise<number> {
+  const [row] = await sql`
+    INSERT INTO scrape_runs (source, status)
+    VALUES (${source}, 'running')
+    RETURNING id
+  `
+  return row.id
+}
+
+export async function finishScrapeRun(id: number, jobsFound: number): Promise<void> {
+  await sql`
+    UPDATE scrape_runs
+    SET status = 'completed', jobs_found = ${jobsFound}, finished_at = NOW()
+    WHERE id = ${id}
+  `
+}
+
+export async function failScrapeRun(id: number): Promise<void> {
+  await sql`
+    UPDATE scrape_runs
+    SET status = 'failed', finished_at = NOW()
+    WHERE id = ${id}
+  `
+}
+
+// --- Job upsert ---
+
+export async function upsertJob(job: EnrichedJob): Promise<number | null> {
+  return await sql.begin(async (tx) => {
+    const normTitle = normalizeTitle(job.title)
+    const normCompany = normalizeCompany(job.company ?? '')
+
+    // Upsert canonical job — dedup by normalized title + company + level
+    const [jobRow] = await tx`
+      INSERT INTO jobs (
+        title, company, normalized_title, normalized_company,
+        category, level, description, classified_by, llm_confidence, posted_at
+      ) VALUES (
+        ${job.title}, ${job.company}, ${normTitle}, ${normCompany},
+        ${job.category}, ${job.level}, ${job.description}, ${job.classifiedBy}, ${job.llmConfidence},
+        ${job.postedAt}
+      )
+      ON CONFLICT (normalized_title, normalized_company, level)
+      DO UPDATE SET title = jobs.title
+      RETURNING id
+    `
+    const jobId: number = jobRow.id
+
+    // Insert source listing — skip if already scraped from this source
+    const [listing] = await tx`
+      INSERT INTO job_listings (job_id, source, source_id, url)
+      VALUES (${jobId}, ${job.source}, ${job.sourceId}, ${job.url})
+      ON CONFLICT (source, source_id) DO NOTHING
+      RETURNING id
+    `
+
+    // Cities and tech stack belong to the canonical job
+    for (const cityName of job.cities) {
+      const [city] = await tx`
+        INSERT INTO cities (name) VALUES (${cityName})
+        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id
+      `
+      await tx`
+        INSERT INTO job_cities (job_id, city_id) VALUES (${jobId}, ${city.id})
+        ON CONFLICT DO NOTHING
+      `
+    }
+
+    for (const techName of job.techStack) {
+      const [tech] = await tx`
+        INSERT INTO technologies (name) VALUES (${techName})
+        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id
+      `
+      await tx`
+        INSERT INTO job_technologies (job_id, tech_id) VALUES (${jobId}, ${tech.id})
+        ON CONFLICT DO NOTHING
+      `
+    }
+
+    return listing ? jobId : null
+  })
+}
+
+// --- Query types ---
+
+export type JobListing = {
+  source: string
+  url: string
+  posted_at: Date | null
+}
+
+export type JobRow = {
+  id: number
+  title: string
+  company: string | null
+  category: string
+  level: string
+  cities: string[]
+  tech_stack: string[]
+  listings: JobListing[]
+}
+
+// --- Queries ---
+
+export async function queryJobs(filters: JobFilters): Promise<{ data: JobRow[]; total: number }> {
+  const { category, levels, city, techs, page = 1, limit = 20 } = filters
+  const offset = (page - 1) * limit
+
+  const cf = category ? sql`AND j.category = ${category}` : sql``
+  const lf = levels?.length ? sql`AND j.level = ANY(${levels})` : sql``
+  const cityf = city ? sql`AND j.id IN (
+    SELECT jc.job_id FROM job_cities jc
+    JOIN cities c ON jc.city_id = c.id WHERE c.name = ${city}
+  )` : sql``
+  const techf = techs?.length ? sql`AND j.id IN (
+    SELECT jt.job_id FROM job_technologies jt
+    JOIN technologies t ON jt.tech_id = t.id WHERE t.name = ANY(${techs})
+  )` : sql``
+
+  const data = await sql<JobRow[]>`
+    SELECT j.id, j.title, j.company, j.category, j.level,
+           COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cities,
+           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
+           COALESCE(
+             json_agg(DISTINCT jsonb_build_object(
+               'source', jl.source, 'url', jl.url, 'posted_at', j.posted_at
+             )) FILTER (WHERE jl.id IS NOT NULL),
+             '[]'
+           ) AS listings
+    FROM jobs j
+    LEFT JOIN job_listings jl ON j.id = jl.job_id
+    LEFT JOIN job_cities jc ON j.id = jc.job_id
+    LEFT JOIN cities c ON jc.city_id = c.id
+    LEFT JOIN job_technologies jt ON j.id = jt.job_id
+    LEFT JOIN technologies t ON jt.tech_id = t.id
+    WHERE 1=1 ${cf} ${lf} ${cityf} ${techf}
+    GROUP BY j.id
+    ORDER BY j.id DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `
+
+  const [{ count }] = await sql`
+    SELECT COUNT(DISTINCT j.id) AS count
+    FROM jobs j
+    LEFT JOIN job_cities jc ON j.id = jc.job_id
+    LEFT JOIN cities c ON jc.city_id = c.id
+    LEFT JOIN job_technologies jt ON j.id = jt.job_id
+    LEFT JOIN technologies t ON jt.tech_id = t.id
+    WHERE 1=1 ${cf} ${lf} ${cityf} ${techf}
+  `
+
+  return { data, total: Number(count) }
+}
+
+export async function getJobById(id: number) {
+  const [job] = await sql`
+    SELECT j.*,
+           COALESCE(array_agg(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS cities,
+           COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') AS tech_stack,
+           COALESCE(
+             json_agg(DISTINCT jsonb_build_object(
+               'source', jl.source, 'url', jl.url, 'posted_at', j.posted_at
+             )) FILTER (WHERE jl.id IS NOT NULL),
+             '[]'
+           ) AS listings
+    FROM jobs j
+    LEFT JOIN job_listings jl ON j.id = jl.job_id
+    LEFT JOIN job_cities jc ON j.id = jc.job_id
+    LEFT JOIN cities c ON jc.city_id = c.id
+    LEFT JOIN job_technologies jt ON j.id = jt.job_id
+    LEFT JOIN technologies t ON jt.tech_id = t.id
+    WHERE j.id = ${id}
+    GROUP BY j.id
+  `
+  return job ?? null
+}
+
+export async function getScrapeStatus() {
+  return await sql`
+    SELECT source, status, jobs_found, started_at, finished_at
+    FROM scrape_runs
+    ORDER BY started_at DESC
+    LIMIT 10
+  `
+}
+
+export async function updateJobField(
+  id: number,
+  field: string,
+  value: string,
+  tx: typeof sql = sql
+): Promise<void> {
+  await tx`
+    UPDATE jobs
+    SET ${tx(field)} = ${value}, classified_by = 'human'
+    WHERE id = ${id}
+  `
+}
