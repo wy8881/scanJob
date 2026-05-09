@@ -1,5 +1,6 @@
 import Elysia, { t } from 'elysia'
 import { queryStats } from '../db/stats'
+import { getCached, setCached } from '../lib/statsCache'
 
 export const statsRoutes = new Elysia().get(
   '/stats',
@@ -14,12 +15,21 @@ export const statsRoutes = new Elysia().get(
       return { error: 'Invalid date. Use ISO format: YYYY-MM-DD' }
     }
 
-    return queryStats(from, to)
+    const category = query.category || undefined
+    const cacheKey = `${from.toISOString()}_${to.toISOString()}_${category ?? ''}`
+
+    const cached = getCached(cacheKey)
+    if (cached) return cached
+
+    const result = await queryStats(from, to, category)
+    setCached(cacheKey, result)
+    return result
   },
   {
     query: t.Object({
       from: t.Optional(t.String()),
       to: t.Optional(t.String()),
+      category: t.Optional(t.String()),
     }),
   }
 )

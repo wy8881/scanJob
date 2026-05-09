@@ -28,4 +28,23 @@ describe('GET /stats', () => {
     )
     expect(res.status).toBe(400)
   })
+
+  it('accepts a valid category param', async () => {
+    const res = await app.handle(
+      new Request('http://localhost/stats?category=software-engineer')
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toHaveProperty('meta')
+    expect(body).toHaveProperty('byTech')
+  })
+
+  it('returns empty results for unknown category', async () => {
+    const res = await app.handle(
+      new Request('http://localhost/stats?category=does-not-exist')
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.meta.totalJobs).toBe(0)
+  })
 })

@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors'
 import { Cron } from 'croner'
 import { statsRoutes } from './api/stats'
 import { runScrape } from './scrapers'
+import { clearCache } from './lib/statsCache'
 
 export const app = new Elysia()
   .use(cors())
@@ -13,6 +14,6 @@ if (import.meta.main) {
     console.log(`Server running on port ${app.server?.port}`)
   })
 
-  runScrape(7)
-  new Cron('0 0 * * *', () => runScrape(1))
+  runScrape(7).then(clearCache)
+  new Cron('0 0 * * *', () => runScrape(1).then(clearCache))
 }
