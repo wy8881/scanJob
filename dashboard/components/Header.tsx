@@ -46,8 +46,9 @@ export function Header({
   onCategoryChange,
 }: HeaderProps) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-6 mb-7 relative z-10">
-      <div className="flex items-center gap-4 flex-nowrap shrink-0">
+    <header className="flex flex-col gap-4 mb-7 relative z-10">
+      {/* Row 1: title */}
+      <div className="flex items-center gap-4 flex-nowrap">
         <div className="sj-float shrink-0">
           <FairyMascot size={72} />
         </div>
@@ -73,31 +74,34 @@ export function Header({
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5">
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            disabled={refreshing}
-            className="bg-white border border-fairy-border rounded-full px-3.5 py-2 flex items-center gap-2 text-[13px] font-bold text-fairy-text transition-all hover:-translate-y-px hover:shadow-md whitespace-nowrap disabled:cursor-wait"
-          >
-            <span className={refreshing ? 'sj-spin' : ''}>✦</span>
-            {refreshing ? 'Refreshing…' : 'Refresh'}
-          </button>
-        )}
+      {/* Row 2: controls — Category + Refresh on left, Date range on right */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="inline-flex items-center gap-2 bg-white border border-fairy-border rounded-full px-3.5 py-2 shadow-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-fairy-muted whitespace-nowrap">
+              Category
+            </span>
+            <select
+              value={activeCategory}
+              onChange={(e) => onCategoryChange(e.target.value)}
+              className="border-none outline-none bg-transparent text-xs font-bold text-fairy-text cursor-pointer"
+            >
+              {CATEGORIES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="inline-flex items-center gap-2 bg-white border border-fairy-border rounded-full px-3.5 py-2 shadow-sm">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-fairy-muted whitespace-nowrap">
-            Category
-          </span>
-          <select
-            value={activeCategory}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="border-none outline-none bg-transparent text-xs font-bold text-fairy-text cursor-pointer"
-          >
-            {CATEGORIES.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className="bg-white border border-fairy-border rounded-full px-3.5 py-2 flex items-center gap-2 text-[13px] font-bold text-fairy-text transition-all hover:-translate-y-px hover:shadow-md whitespace-nowrap disabled:cursor-wait"
+            >
+              <span className={refreshing ? 'sj-spin' : ''}>✦</span>
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+          )}
         </div>
 
         <div className="inline-flex bg-white border border-fairy-border rounded-full p-1 gap-0.5 shadow-sm">

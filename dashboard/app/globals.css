@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@theme {
+  --color-fairy-accent: #a78bfa;
+  --color-fairy-accent-deep: #7c5fe6;
+  --color-fairy-pink: #ff9bd0;
+  --color-fairy-mint: #88d8c0;
+  --color-fairy-sun: #ffd166;
+  --color-fairy-soft: #c8a8ff;
+  --color-fairy-text: #3a2a5e;
+  --color-fairy-muted: #8b7ca8;
+  --color-fairy-border: rgba(199, 175, 255, 0.45);
+  --color-fairy-track: #f4ecff;
+
+  --font-display: var(--font-fredoka), system-ui, sans-serif;
+  --font-body: var(--font-quicksand), system-ui, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: linear-gradient(160deg, #fff1f7 0%, #f4ecff 35%, #e8f3ff 65%, #ecfff5 100%);
+  color: #3a2a5e;
+  min-height: 100vh;
+}
+
+@keyframes sj-twinkle { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:1;transform:scale(1.1)} }
+@keyframes sj-float   { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-6px) rotate(2deg)} }
+@keyframes sj-spin    { to { transform: rotate(360deg) } }
+@keyframes sj-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes sj-bounce  { 0%,80%,100%{transform:translateY(0);opacity:.6} 40%{transform:translateY(-6px);opacity:1} }
+
+.sj-twinkle { animation: sj-twinkle 2.4s ease-in-out infinite; }
+.sj-float   { animation: sj-float 3.6s ease-in-out infinite; }
+.sj-spin    { animation: sj-spin 0.9s linear infinite; display: inline-block; }
+.sj-bounce  { animation: sj-bounce 1s ease-in-out infinite; display: inline-block; }
+.sj-shimmer {
+  background: linear-gradient(90deg, #f4ecff 25%, #fff 50%, #f4ecff 75%);
+  background-size: 200% 100%;
+  animation: sj-shimmer 1.5s linear infinite;
+}
+
+.sj-card {
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.sj-card:hover {
+  transform: translateY(-3px) rotate(-0.4deg);
+}
