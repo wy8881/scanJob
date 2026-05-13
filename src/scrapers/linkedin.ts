@@ -13,6 +13,20 @@ const SEARCH_TERMS = [
   'data analyst', 'IT support', 'cyber security', 'QA engineer',
 ]
 
+const DETAIL_URL = 'https://www.linkedin.com/jobs-guest/jobs/api/jobPosting'
+
+export async function fetchLinkedInDescription(jobId: string): Promise<string> {
+  try {
+    const res = await fetch(`${DETAIL_URL}/${jobId}`, { headers: HEADERS })
+    if (!res.ok) return ''
+    const html = await res.text()
+    const $ = cheerio.load(html)
+    return $('.show-more-less-html__markup').text().trim()
+  } catch {
+    return ''
+  }
+}
+
 export async function fetchPage(keyword: string, start: number, daterangeDays: number): Promise<RawJob[]> {
   const tpr = daterangeDays * 24 * 3600
   const url = `${BASE_URL}?keywords=${encodeURIComponent(keyword)}&location=Australia&f_TPR=r${tpr}&start=${start}`
@@ -76,9 +90,17 @@ export async function scrapeLinkedIn(daterangeDays = 1, maxPages = Infinity): Pr
   }
 
   const seen = new Set<string>()
-  return all.filter(job => {
+  const unique = all.filter(job => {
     if (seen.has(job.sourceId)) return false
     seen.add(job.sourceId)
     return true
   })
+
+  for (const job of unique) {
+    job.description = await fetchLinkedInDescription(job.sourceId)
+    console.log(`  [linkedin] description for "${job.title}" (${job.description.length} chars)`)
+    await new Promise(r => setTimeout(r, 1000))
+  }
+
+  return unique
 }
