@@ -7,7 +7,7 @@ interface Props {
   data: { tech: string; count: number }[]
 }
 
-const COLORS = ['#a78bfa', '#ff9bd0', '#ffd166', '#88d8c0', '#7cc4ff', '#c8a8ff', '#ff9bd0', '#88d8c0']
+const COLORS = ['#a78bfa', '#ff9bd0', '#ffd166', '#88d8c0', '#7cc4ff', '#c8a8ff', '#ffb347', '#a8e6cf']
 
 export function FairyBars({ data }: Props) {
   const [active, setActive] = useState<number | null>(null)

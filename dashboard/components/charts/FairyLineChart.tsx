@@ -22,10 +22,14 @@ export function FairyLineChart({ data }: Props) {
   const [hover, setHover] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(900)
+  const cachedRect = useRef<DOMRect | null>(null)
 
   useEffect(() => {
     if (!ref.current) return
-    const ro = new ResizeObserver((entries) => setW(entries[0].contentRect.width))
+    const ro = new ResizeObserver((entries) => {
+      cachedRect.current = null
+      setW(entries[0].contentRect.width)
+    })
     ro.observe(ref.current)
     return () => ro.disconnect()
   }, [])
@@ -47,18 +51,11 @@ export function FairyLineChart({ data }: Props) {
 
   const handleMove = (e: React.MouseEvent) => {
     if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const px = e.clientX - rect.left
-    let bestI = 0
-    let bestD = Infinity
-    data.forEach((_, i) => {
-      const d = Math.abs(x(i) - px)
-      if (d < bestD) {
-        bestD = d
-        bestI = i
-      }
-    })
-    setHover(bestI)
+    if (!cachedRect.current) cachedRect.current = ref.current.getBoundingClientRect()
+    const px = e.clientX - cachedRect.current.left
+    const step = innerW / Math.max(1, data.length - 1)
+    const i = Math.max(0, Math.min(data.length - 1, Math.round((px - padding.left) / step)))
+    setHover((prev) => (prev === i ? prev : i))
   }
 
   return (
@@ -133,7 +130,7 @@ export function FairyLineChart({ data }: Props) {
         )}
 
         {hover != null && (
-          <g>
+          <>
             <line x1={x(hover)} x2={x(hover)} y1={padding.top} y2={padding.top + innerH} stroke={ACCENT} strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
             <circle cx={x(hover)} cy={y(data[hover].count)} r="9" fill="#fff" stroke={ACCENT} strokeWidth="2.5" />
             <circle cx={x(hover)} cy={y(data[hover].count)} r="4" fill={ACCENT} />
@@ -146,7 +143,7 @@ export function FairyLineChart({ data }: Props) {
                 ✨ {data[hover].count.toLocaleString()} jobs
               </text>
             </g>
-          </g>
+          </>
         )}
       </svg>
     </div>

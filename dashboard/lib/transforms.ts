@@ -15,18 +15,15 @@ export function getDateRange(range: TimeRange): { from: Date; to: Date } {
   const from = new Date()
   if (range === 'month') {
     from.setDate(1)
-    from.setHours(0, 0, 0, 0)
   } else if (range === '3months') {
     from.setMonth(from.getMonth() - 3)
-    from.setHours(0, 0, 0, 0)
   } else if (range === '6months') {
     from.setMonth(from.getMonth() - 6)
-    from.setHours(0, 0, 0, 0)
   } else {
     from.setMonth(0)
     from.setDate(1)
-    from.setHours(0, 0, 0, 0)
   }
+  from.setHours(0, 0, 0, 0)
   return { from, to }
 }
 

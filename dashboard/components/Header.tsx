@@ -47,7 +47,6 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="flex flex-col gap-4 mb-7 relative z-10">
-      {/* Row 1: title */}
       <div className="flex items-center gap-4 flex-nowrap">
         <div className="sj-float shrink-0">
           <FairyMascot size={72} />
@@ -74,7 +73,6 @@ export function Header({
         </div>
       </div>
 
-      {/* Row 2: controls — Category + Refresh on left, Date range on right */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="inline-flex items-center gap-2 bg-white border border-fairy-border rounded-full px-3.5 py-2 shadow-sm">

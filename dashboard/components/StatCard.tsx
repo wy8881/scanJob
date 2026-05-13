@@ -13,6 +13,7 @@ interface StatCardProps {
 export function StatCard({ label, value, sub, accent, topFive }: StatCardProps) {
   const [open, setOpen] = useState(false)
   const isClickable = !!topFive
+  const max = topFive ? Math.max(...topFive.map((x) => x.count)) || 1 : 1
 
   return (
     <div
@@ -49,7 +50,7 @@ export function StatCard({ label, value, sub, accent, topFive }: StatCardProps) 
           className="flex items-center gap-1 text-[11px] font-bold mt-2.5 whitespace-nowrap"
           style={{ color: accent, opacity: 0.9 }}
         >
-          <span className="whitespace-nowrap">{open ? 'Hide top 5' : 'See top 5'}</span>
+          <span>{open ? 'Hide top 5' : 'See top 5'}</span>
           <span
             className="inline-block transition-transform"
             style={{ transform: open ? 'rotate(180deg)' : 'none' }}
@@ -59,13 +60,12 @@ export function StatCard({ label, value, sub, accent, topFive }: StatCardProps) 
         </div>
       )}
 
-      {open && topFive && (
+      {open && (
         <div className="mt-3 pt-3 border-t border-dashed border-fairy-border">
-          {topFive.map((item, i) => {
-            const max = Math.max(...topFive.map((x) => x.count)) || 1
+          {topFive!.map((item, i) => {
             const pct = (item.count / max) * 100
             return (
-              <div key={item.name} className={i === topFive.length - 1 ? '' : 'mb-2'}>
+              <div key={item.name} className={i === topFive!.length - 1 ? '' : 'mb-2'}>
                 <div className="flex justify-between mb-[3px]">
                   <span className="text-xs font-bold text-fairy-text">
                     <span className="mr-1.5" style={{ color: accent }}>{i + 1}</span>

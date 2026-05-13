@@ -19,6 +19,13 @@ const ACCENT = {
   company: '#c8a8ff',
 }
 
+const RANGE_LABEL: Record<TimeRange, string> = {
+  month: 'month',
+  '3months': '3 months',
+  '6months': '6 months',
+  year: 'year',
+}
+
 function Skeleton({ height }: { height: number }) {
   return (
     <div
@@ -67,18 +74,11 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-[60px] left-[-40px] opacity-50 z-0 pointer-events-none">
-        <Cloud size={180} />
-      </div>
-      <div className="absolute top-[220px] right-[-60px] opacity-40 z-0 pointer-events-none">
-        <Cloud size={220} />
-      </div>
-      <div className="absolute bottom-[120px] left-[80px] opacity-35 z-0 pointer-events-none">
-        <Cloud size={140} />
-      </div>
-      <div className="absolute bottom-10 right-[6%] opacity-40 z-0 pointer-events-none">
-        <Rainbow size={90} />
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-[60px] left-[-40px] opacity-50"><Cloud size={180} /></div>
+        <div className="absolute top-[220px] right-[-60px] opacity-40"><Cloud size={220} /></div>
+        <div className="absolute bottom-[120px] left-[80px] opacity-35"><Cloud size={140} /></div>
+        <div className="absolute bottom-10 right-[6%] opacity-40"><Rainbow size={90} /></div>
       </div>
       <SparkleField count={28} seed={3} />
 
@@ -101,19 +101,13 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-5 gap-4 mb-6">
           {loading || !stats ? (
-            <>
-              <Skeleton height={130} />
-              <Skeleton height={130} />
-              <Skeleton height={130} />
-              <Skeleton height={130} />
-              <Skeleton height={130} />
-            </>
+            Array.from({ length: 5 }, (_, i) => <Skeleton key={i} height={130} />)
           ) : (
             <>
               <StatCard
                 label="Total Jobs"
                 value={stats.meta.totalJobs.toLocaleString()}
-                sub={`across this ${range === 'month' ? 'month' : range === 'year' ? 'year' : range.replace('months', ' months')}`}
+                sub={`across this ${RANGE_LABEL[range]}`}
                 accent={ACCENT.total}
               />
               <StatCard

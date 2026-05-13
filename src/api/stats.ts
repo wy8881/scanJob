@@ -5,10 +5,11 @@ import { getCached, setCached } from '../lib/statsCache'
 export const statsRoutes = new Elysia().get(
   '/stats',
   async ({ query, set }) => {
+    const now = new Date()
     const from = query.from
       ? new Date(query.from)
-      : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    const to = query.to ? new Date(query.to) : new Date()
+      : new Date(now.getFullYear(), now.getMonth(), 1)
+    const to = query.to ? new Date(query.to) : now
 
     if (isNaN(from.getTime()) || isNaN(to.getTime())) {
       set.status = 400
