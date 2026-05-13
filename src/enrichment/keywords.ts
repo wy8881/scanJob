@@ -1,7 +1,8 @@
 const TECH_KEYWORDS = [
   'React', 'Vue', 'Angular', 'TypeScript', 'JavaScript',
   'Python', 'Java', 'Go', 'Rust', 'C#', 'PHP', 'Ruby',
-  'Node.js', 'Express', 'Django', 'FastAPI', 'Spring',
+  '.NET', '.Net Core', 'ASP.NET', 'Node.js', 'Express', 'Django', 'FastAPI', 'Spring',
+  'Salesforce', 'SAP',
   'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite',
   'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Terraform',
   'React Native', 'Flutter', 'Swift', 'Kotlin',
@@ -19,14 +20,19 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   'backend-developer':  ['backend', 'back-end', 'back end', 'api developer'],
   'web-development':    ['web developer', 'frontend', 'front-end', 'ui developer'],
   'data-analyst':       ['data analyst', 'data scientist', 'business analyst', 'bi developer'],
+  'data-engineer':      ['data engineer', 'etl developer', 'data platform', 'data pipeline'],
+  'ai-ml-engineer':     ['ai engineer', 'ml engineer', 'machine learning', 'artificial intelligence', 'llm engineer', 'nlp engineer', 'computer vision'],
   'it-support':         ['it support', 'helpdesk', 'help desk', 'service desk', 'sysadmin', 'systems administrator'],
   'cyber-security':     ['cyber', 'security engineer', 'penetration', 'infosec', 'soc analyst'],
   'qa-tester':          ['qa engineer', 'quality assurance', 'test engineer', 'tester', 'sdet', 'automation engineer'],
+  'devops':             ['devops', 'site reliability', 'sre', 'platform engineer', 'infrastructure engineer', 'cloud engineer'],
+  'mobile-developer':   ['mobile developer', 'ios developer', 'android developer', 'react native developer', 'flutter developer'],
+  'developer':          ['developer', 'programmer'],
 }
 
 export function extractTechStack(description: string): string[] {
-  const lower = description.toLowerCase()
-  return TECH_KEYWORDS.filter(tech => lower.includes(tech.toLowerCase()))
+  const words = new Set(description.split(/\s+/))
+  return TECH_KEYWORDS.filter(tech => words.has(tech))
 }
 
 export function detectLevel(title: string): string | null {

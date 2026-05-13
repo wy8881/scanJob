@@ -24,6 +24,20 @@ const CATEGORY_URLS: Record<string, string> = {
 
 type BrowserPage = Awaited<ReturnType<typeof chromium.launch>>['contexts'][0]['pages'][0]
 
+async function fetchDescription(page: BrowserPage, url: string): Promise<string> {
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await new Promise(r => setTimeout(r, 1000))
+    const description = await page.evaluate(() => {
+      const el = document.querySelector('[data-automation="jobAdDetails"]')
+      return el?.textContent?.trim() ?? ''
+    })
+    return description
+  } catch {
+    return ''
+  }
+}
+
 async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange: number, maxPages = Infinity): Promise<RawJob[]> {
   const jobs: RawJob[] = []
 
@@ -66,11 +80,13 @@ async function scrapeCategory(page: BrowserPage, categorySlug: string, daterange
 
     for (const j of pageJobs) {
       if (!j.title || !j.sourceId) continue
+      const description = j.url ? await fetchDescription(page, j.url) : ''
+      console.log(`  [seek] fetched description for "${j.title}" (${description.length} chars)`)
       jobs.push({
         title: j.title,
         company: j.company,
         cities: j.locationText ? [j.locationText.split(',')[0].trim()] : [],
-        description: '',
+        description,
         url: j.url,
         sourceId: j.sourceId,
         source: 'seek',

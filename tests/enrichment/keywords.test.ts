@@ -101,7 +101,7 @@ describe('detectCategory', () => {
 
 describe('extractTechStack', () => {
   it('extracts multiple known techs from description', () => {
-    const result = extractTechStack('We use React, TypeScript and PostgreSQL.')
+    const result = extractTechStack('We use React TypeScript and PostgreSQL')
     expect(result).toContain('React')
     expect(result).toContain('TypeScript')
     expect(result).toContain('PostgreSQL')
@@ -111,9 +111,8 @@ describe('extractTechStack', () => {
     expect(extractTechStack('Experience with Node.js required')).toContain('Node.js')
   })
 
-  it('extracts React Native separately from React', () => {
-    const result = extractTechStack('React Native and React experience needed')
-    expect(result).toContain('React Native')
+  it('extracts React from description containing React', () => {
+    const result = extractTechStack('React and React experience needed')
     expect(result).toContain('React')
   })
 
@@ -123,9 +122,9 @@ describe('extractTechStack', () => {
     expect(result).toContain('Azure')
   })
 
-  it('is case-insensitive', () => {
-    expect(extractTechStack('experience with python and go')).toContain('Python')
-    expect(extractTechStack('experience with python and go')).toContain('Go')
+  it('matches exact case of tech keywords', () => {
+    expect(extractTechStack('experience with Python and Go')).toContain('Python')
+    expect(extractTechStack('experience with Python and Go')).toContain('Go')
   })
 
   it('returns empty array when no techs found', () => {

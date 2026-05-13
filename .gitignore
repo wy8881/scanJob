@@ -1,5 +1,7 @@
 .worktrees/
 .superpowers/
+docs/superpowers/
+.env.local
 node_modules/
 .env
 .playwright/
